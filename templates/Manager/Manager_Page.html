@@ -1,0 +1,681 @@
+<!-- templates/Manager/Manager_Page.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manager Dashboard</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/manager_dashboard.css') }}">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <!-- Top Navigation Bar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">Manager Dashboard</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item">
+            <a class="nav-link active" href="#dashboard-section">
+              <i class="fas fa-home"></i> Dashboard
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#team-section">
+              <i class="fas fa-users"></i> Team
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#tasks-section">
+              <i class="fas fa-tasks"></i> Tasks
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#leave-section">
+              <i class="fas fa-calendar-alt"></i> Leave
+              <span class="badge bg-danger leave-notification">2</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#announcements-section">
+              <i class="fas fa-bullhorn"></i> Announcements
+            </a>
+          </li>
+        </ul>
+        <div class="navbar-nav">
+          <div class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+              <i class="fas fa-user-circle"></i> {{ current_user.first_name }} {{ current_user.last_name }}
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="#"><i class="fas fa-user"></i> Profile</a></li>
+              <li><a class="dropdown-item" href="#"><i class="fas fa-cog"></i> Settings</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}">
+                  <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container-fluid py-3">
+    <!-- Dashboard Overview Section -->
+    <section id="dashboard-section" class="mb-5">
+      <div class="card shadow">
+        <div class="card-header bg-light">
+          <h4><i class="fas fa-tachometer-alt"></i> Dashboard Overview</h4>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <!-- Team Stats Card -->
+            <div class="col-md-3 mb-3">
+              <div class="card bg-primary text-white">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                      <h6 class="card-title">Team Members</h6>
+                      <h2 class="mb-0">{{ team_count }}</h2>
+                    </div>
+                    <i class="fas fa-users fa-3x opacity-50"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Pending Leave Requests Card -->
+            <div class="col-md-3 mb-3">
+              <div class="card bg-warning text-dark">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                      <h6 class="card-title">Pending Leave Requests</h6>
+                      <h2 class="mb-0">{{ pending_leave_count }}</h2>
+                    </div>
+                    <i class="fas fa-calendar-alt fa-3x opacity-50"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Ongoing Tasks Card -->
+            <div class="col-md-3 mb-3">
+              <div class="card bg-success text-white">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                      <h6 class="card-title">Ongoing Tasks</h6>
+                      <h2 class="mb-0">{{ ongoing_tasks_count }}</h2>
+                    </div>
+                    <i class="fas fa-clipboard-list fa-3x opacity-50"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Completed Tasks Card -->
+            <div class="col-md-3 mb-3">
+              <div class="card bg-info text-white">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                      <h6 class="card-title">Completed Tasks</h6>
+                      <h2 class="mb-0">{{ completed_tasks_count }}</h2>
+                    </div>
+                    <i class="fas fa-check-circle fa-3x opacity-50"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="row mt-4">
+            <!-- Attendance Chart -->
+            <div class="col-md-6 mb-3">
+              <div class="card h-100">
+                <div class="card-header">
+                  <h5>Team Attendance (Last 7 Days)</h5>
+                </div>
+                <div class="card-body">
+                  <canvas id="attendanceChart"></canvas>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Task Completion Chart -->
+            <div class="col-md-6 mb-3">
+              <div class="card h-100">
+                <div class="card-header">
+                  <h5>Task Completion Rate</h5>
+                </div>
+                <div class="card-body">
+                  <canvas id="taskCompletionChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Team Management Section -->
+    <section id="team-section" class="mb-5">
+      <div class="card shadow">
+        <div class="card-header bg-light">
+          <h4><i class="fas fa-users"></i> Team Management</h4>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Position</th>
+                  <th>Join Date</th>
+                  <th>Ongoing Tasks</th>
+                  <th>Leave Balance</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for employee in team_members %}
+                <tr>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <div class="avatar-sm me-2">
+                        {% if employee.profile_picture %}
+                          <img src="{{ employee.profile_picture }}" class="rounded-circle" width="40" alt="Profile">
+                        {% else %}
+                          <div class="default-avatar">{{ employee.first_name[0] }}{{ employee.last_name[0] }}</div>
+                        {% endif %}
+                      </div>
+                      {{ employee.first_name }} {{ employee.last_name }}
+                    </div>
+                  </td>
+                  <td>{{ employee.position }}</td>
+                  <td>{{ employee.created_at.strftime('%Y-%m-%d') }}</td>
+                  <td>{{ employee.ongoing_tasks|default(0) }}</td>
+                  <td>{{ employee.leave_balance|default(0) }} days</td>
+                  <td>
+                    <button class="btn btn-sm btn-info" onclick="viewProfile({{ employee.person_id }})">
+                      <i class="fas fa-user"></i> Profile
+                    </button>
+                    <button class="btn btn-sm btn-primary" onclick="assignTask({{ employee.person_id }})">
+                      <i class="fas fa-tasks"></i> Assign Task
+                    </button>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Task Assignment Section -->
+    <section id="tasks-section" class="mb-5">
+      <div class="card shadow">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+          <h4><i class="fas fa-tasks"></i> Task Management</h4>
+          <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newTaskModal">
+            <i class="fas fa-plus"></i> Assign New Task
+          </button>
+        </div>
+        <div class="card-body">
+          <ul class="nav nav-tabs" id="taskTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="all-tasks-tab" data-bs-toggle="tab" data-bs-target="#all-tasks" type="button">All Tasks</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="pending-tasks-tab" data-bs-toggle="tab" data-bs-target="#pending-tasks" type="button">Pending</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="in-progress-tasks-tab" data-bs-toggle="tab" data-bs-target="#in-progress-tasks" type="button">In Progress</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="completed-tasks-tab" data-bs-toggle="tab" data-bs-target="#completed-tasks" type="button">Completed</button>
+            </li>
+          </ul>
+          <div class="tab-content pt-3" id="taskTabsContent">
+            <div class="tab-pane fade show active" id="all-tasks">
+              <div class="table-responsive">
+                <table class="table table-hover">
+                  <thead>
+                    <tr>
+                      <th>Task Title</th>
+                      <th>Assigned To</th>
+                      <th>Due Date</th>
+                      <th>Status</th>
+                      <th>Priority</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for task in tasks %}
+                    <tr>
+                      <td>{{ task.title }}</td>
+                      <td>{{ get_user_name(task.assigned_to) }}</td>
+                      <td>{{ task.due_date.strftime('%Y-%m-%d') }}</td>
+                      <td>
+                        <span class="badge {% if task.status == 'Completed' %}bg-success{% elif task.status == 'In Progress' %}bg-primary{% elif task.status == 'Pending' %}bg-warning{% endif %}">
+                          {{ task.status }}
+                        </span>
+                      </td>
+                      <td>
+                        <span class="badge {% if task.priority == 'High' %}bg-danger{% elif task.priority == 'Medium' %}bg-warning{% elif task.priority == 'Low' %}bg-info{% endif %}">
+                          {{ task.priority }}
+                        </span>
+                      </td>
+                      <td>
+                        <button class="btn btn-sm btn-info" onclick="viewTask({{ task.id }})">
+                          <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-warning" onclick="editTask({{ task.id }})">
+                          <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteTask({{ task.id }})">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="tab-pane fade" id="pending-tasks">
+              <!-- Similar table for pending tasks -->
+            </div>
+            <div class="tab-pane fade" id="in-progress-tasks">
+              <!-- Similar table for in-progress tasks -->
+            </div>
+            <div class="tab-pane fade" id="completed-tasks">
+              <!-- Similar table for completed tasks -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Leave Management Section -->
+    <section id="leave-section" class="mb-5">
+      <div class="card shadow">
+        <div class="card-header bg-light">
+          <h4><i class="fas fa-calendar-alt"></i> Leave Management</h4>
+        </div>
+        <div class="card-body">
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <div class="card h-100">
+                <div class="card-header">
+                  <h5>Leave Requests Pending Approval</h5>
+                </div>
+                <div class="card-body">
+                  <div class="list-group">
+                    {% for request in pending_leave_requests %}
+                    <div class="list-group-item list-group-item-action">
+                      <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">{{ get_user_name(request.user_id) }}</h5>
+                        <small>Requested on {{ request.created_at.strftime('%Y-%m-%d') }}</small>
+                      </div>
+                      <p class="mb-1">{{ request.leave_type }} - {{ request.start_date.strftime('%Y-%m-%d') }} to {{ request.end_date.strftime('%Y-%m-%d') }}</p>
+                      <p class="mb-1"><strong>Reason:</strong> {{ request.reason }}</p>
+                      <div class="mt-2">
+                        <button class="btn btn-sm btn-success" onclick="approveLeave({{ request.id }})">
+                          <i class="fas fa-check"></i> Approve
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="rejectLeave({{ request.id }})">
+                          <i class="fas fa-times"></i> Reject
+                        </button>
+                      </div>
+                    </div>
+                    {% endfor %}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card h-100">
+                <div class="card-header">
+                  <h5>Team Leave Statistics</h5>
+                </div>
+                <div class="card-body">
+                  <canvas id="leaveStatisticsChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card">
+            <div class="card-header">
+              <h5>Leave Calendar</h5>
+            </div>
+            <div class="card-body">
+              <!-- Leave Calendar Goes Here -->
+              <div id="leaveCalendar"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Announcements Section -->
+    <section id="announcements-section" class="mb-5">
+      <div class="card shadow">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+          <h4><i class="fas fa-bullhorn"></i> Team Announcements</h4>
+          <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newAnnouncementModal">
+            <i class="fas fa-plus"></i> New Announcement
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <div class="input-group">
+                <input type="text" class="form-control" placeholder="Search announcements..." id="announcementSearch">
+                <button class="btn btn-outline-secondary" type="button">
+                  <i class="fas fa-search"></i>
+                </button>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <select class="form-select" id="announcementCategoryFilter">
+                <option value="">All Categories</option>
+                <option value="General">General</option>
+                <option value="Important">Important</option>
+                <option value="Policy">Policy</option>
+                <option value="Event">Event</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="announcements-list">
+            {% for announcement in announcements %}
+            <div class="card mb-3 announcement-card">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">{{ announcement.title }}</h5>
+                <span class="badge {% if announcement.category == 'Important' %}bg-danger{% elif announcement.category == 'General' %}bg-primary{% elif announcement.category == 'Policy' %}bg-warning{% elif announcement.category == 'Event' %}bg-success{% endif %}">
+                  {{ announcement.category }}
+                </span>
+              </div>
+              <div class="card-body">
+                <p class="card-text">{{ announcement.content }}</p>
+                <p class="text-muted">Posted by: {{ get_user_name(announcement.created_by) }} on {{ announcement.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+              </div>
+              <div class="card-footer text-end">
+                <button class="btn btn-sm btn-warning" onclick="editAnnouncement({{ announcement.id }})">
+                  <i class="fas fa-edit"></i> Edit
+                </button>
+                <button class="btn btn-sm btn-danger" onclick="deleteAnnouncement({{ announcement.id }})">
+                  <i class="fas fa-trash"></i> Delete
+                </button>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Modals -->
+  <!-- New Task Modal -->
+  <div class="modal fade" id="newTaskModal" tabindex="-1" aria-labelledby="newTaskModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="newTaskModalLabel">Assign New Task</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="newTaskForm" action="{{ url_for('views.create_task') }}" method="POST" enctype="multipart/form-data">
+            <div class="mb-3">
+              <label for="taskTitle" class="form-label">Task Title</label>
+              <input type="text" class="form-control" id="taskTitle" name="title" required>
+            </div>
+            <div class="mb-3">
+              <label for="taskAssignee" class="form-label">Assign To</label>
+              <select class="form-select" id="taskAssignee" name="assigned_to" required>
+                <option value="" selected disabled>Select Employee</option>
+                {% for employee in team_members %}
+                <option value="{{ employee.person_id }}">{{ employee.first_name }} {{ employee.last_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="taskDueDate" class="form-label">Due Date</label>
+                <input type="date" class="form-control" id="taskDueDate" name="due_date" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="taskPriority" class="form-label">Priority</label>
+                <select class="form-select" id="taskPriority" name="priority" required>
+                  <option value="Low">Low</option>
+                  <option value="Medium" selected>Medium</option>
+                  <option value="High">High</option>
+                </select>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="taskDescription" class="form-label">Description</label>
+              <textarea class="form-control" id="taskDescription" name="description" rows="4" required></textarea>
+            </div>
+            <div class="mb-3">
+              <label for="taskAttachment" class="form-label">Attachments (Optional)</label>
+              <input type="file" class="form-control" id="taskAttachment" name="attachment">
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" form="newTaskForm" class="btn btn-primary">Assign Task</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- New Announcement Modal -->
+  <div class="modal fade" id="newAnnouncementModal" tabindex="-1" aria-labelledby="newAnnouncementModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="newAnnouncementModalLabel">Create New Announcement</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="newAnnouncementForm" action="{{ url_for('views.create_announcement') }}" method="POST">
+            <div class="mb-3">
+              <label for="announcementTitle" class="form-label">Title</label>
+              <input type="text" class="form-control" id="announcementTitle" name="title" required>
+            </div>
+            <div class="mb-3">
+              <label for="announcementCategory" class="form-label">Category</label>
+              <select class="form-select" id="announcementCategory" name="category" required>
+                <option value="General" selected>General</option>
+                <option value="Important">Important</option>
+                <option value="Policy">Policy</option>
+                <option value="Event">Event</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="announcementContent" class="form-label">Content</label>
+              <textarea class="form-control" id="announcementContent" name="content" rows="6" required></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" form="newAnnouncementForm" class="btn btn-primary">Post Announcement</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS Bundle with Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Custom JS -->
+  <script src="{{ url_for('static', filename='js/manager_dashboard.js') }}"></script>
+  
+  <script>
+    // Charts
+    document.addEventListener('DOMContentLoaded', function() {
+      // Attendance Chart
+      const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
+      new Chart(attendanceCtx, {
+        type: 'bar',
+        data: {
+          labels: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+          datasets: [{
+            label: 'Present',
+            data: [12, 14, 15, 13, 14, 10, 5],
+            backgroundColor: 'rgba(75, 192, 192, 0.6)',
+          }, {
+            label: 'Absent',
+            data: [3, 1, 0, 2, 1, 5, 10],
+            backgroundColor: 'rgba(255, 99, 132, 0.6)',
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Number of Employees'
+              }
+            }
+          }
+        }
+      });
+
+      // Task Completion Chart
+      const taskCtx = document.getElementById('taskCompletionChart').getContext('2d');
+      new Chart(taskCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Completed', 'In Progress', 'Pending', 'Overdue'],
+          datasets: [{
+            data: [65, 20, 10, 5],
+            backgroundColor: [
+              'rgba(75, 192, 192, 0.6)',
+              'rgba(54, 162, 235, 0.6)',
+              'rgba(255, 206, 86, 0.6)',
+              'rgba(255, 99, 132, 0.6)'
+            ],
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'right',
+            }
+          }
+        }
+      });
+      
+      // Leave Statistics Chart
+      const leaveCtx = document.getElementById('leaveStatisticsChart').getContext('2d');
+      new Chart(leaveCtx, {
+        type: 'bar',
+        data: {
+          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+          datasets: [{
+            label: 'Leave Days Taken',
+            data: [5, 7, 10, 8, 12, 15, 18, 14, 9, 7, 8, 12],
+            backgroundColor: 'rgba(153, 102, 255, 0.6)',
+            borderColor: 'rgba(153, 102, 255, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Days'
+              }
+            }
+          }
+        }
+      });
+    });
+
+    // Task functions
+    function viewTask(taskId) {
+      // Logic to view task details
+      console.log("View task:", taskId);
+    }
+
+    function editTask(taskId) {
+      // Logic to edit task
+      console.log("Edit task:", taskId);
+    }
+
+    function deleteTask(taskId) {
+      // Logic to delete task
+      if (confirm("Are you sure you want to delete this task?")) {
+        console.log("Delete task:", taskId);
+      }
+    }
+
+    // Employee profile functions
+    function viewProfile(employeeId) {
+      // Logic to view employee profile
+      console.log("View profile:", employeeId);
+    }
+
+    function assignTask(employeeId) {
+      // Open task modal and pre-select employee
+      document.getElementById("taskAssignee").value = employeeId;
+      let newTaskModal = new bootstrap.Modal(document.getElementById('newTaskModal'));
+      newTaskModal.show();
+    }
+
+    // Leave management functions
+    function approveLeave(requestId) {
+      // Logic to approve leave
+      if (confirm("Are you sure you want to approve this leave request?")) {
+        console.log("Approve leave:", requestId);
+      }
+    }
+
+    function rejectLeave(requestId) {
+      // Logic to reject leave
+      if (confirm("Are you sure you want to reject this leave request?")) {
+        console.log("Reject leave:", requestId);
+      }
+    }
+
+    // Announcement functions
+    function editAnnouncement(announcementId) {
+      // Logic to edit announcement
+      console.log("Edit announcement:", announcementId);
+    }
+
+    function deleteAnnouncement(announcementId) {
+      // Logic to delete announcement
+      if (confirm("Are you sure you want to delete this announcement?")) {
+        console.log("Delete announcement:", announcementId);
+      }
+    }
+  </script>
+</body>
+</html>

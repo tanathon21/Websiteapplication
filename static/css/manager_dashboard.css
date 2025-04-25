@@ -1,0 +1,16 @@
+/* static/css/manager_dashboard.css */
+
+/* Default avatar styling */
+.default-avatar {
+    width: 40px;
+    height: 40px;
+    background-color: #6c757d;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+/* Notification

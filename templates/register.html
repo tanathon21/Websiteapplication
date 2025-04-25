@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Include SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding-top: 40px;
+            padding-bottom: 40px;
+        }
+        .form-register {
+            width: 100%;
+            max-width: 600px;
+            padding: 15px;
+            margin: auto;
+        }
+        .card {
+            border-radius: 1rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+    </style>
+</head>
+<body>
+    <main class="form-register">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="text-center mb-4">Create an Account</h2>
+                
+                <!-- Hidden div for flash messages -->
+                <div id="flash-messages" data-messages="{{ get_flashed_messages(with_categories=true)|tojson }}"></div>
+                
+                <form method="POST" action="{{ url_for('auth.register') }}">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="first_name" class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="first_name" name="first_name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="last_name" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="last_name" name="last_name" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="thai_first_name" class="form-label">Thai First Name</label>
+                            <input type="text" class="form-control" id="thai_first_name" name="thai_first_name">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="thai_last_name" class="form-label">Thai Last Name</label>
+                            <input type="text" class="form-control" id="thai_last_name" name="thai_last_name">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" name="username" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary" type="submit">Register</button>
+                    </div>
+                </form>
+                
+                <div class="text-center mt-3">
+                    <p>Already have an account? <a href="{{ url_for('auth.login') }}">Login here</a></p>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Include SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.all.min.js"></script>
+    
+    <script>
+        // Function to display flash messages using SweetAlert2
+        document.addEventListener('DOMContentLoaded', function() {
+            const flashMessagesElement = document.getElementById('flash-messages');
+            const flashMessages = JSON.parse(flashMessagesElement.dataset.messages || '[]');
+            
+            if (flashMessages.length > 0) {
+                // Get the first flash message
+                const [category, message] = flashMessages[0];
+                
+                // Map Flask message categories to SweetAlert2 types
+                const typeMap = {
+                    'success': 'success',
+                    'info': 'info',
+                    'warning': 'warning',
+                    'danger': 'error',
+                    'error': 'error'
+                };
+                
+                const type = typeMap[category] || 'info';
+                
+                // Show SweetAlert2
+                Swal.fire({
+                    title: type.charAt(0).toUpperCase() + type.slice(1),
+                    text: message,
+                    icon: type,
+                    confirmButtonText: 'OK',
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+            }
+        });
+    </script>
+</body>
+</html>

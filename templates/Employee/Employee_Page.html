@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Employee Dashboard</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- FullCalendar -->
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --primary-color: #3498db;
+      --secondary-color: #2ecc71;
+      --danger-color: #e74c3c;
+      --warning-color: #f39c12;
+      --light-color: #f8f9fa;
+      --dark-color: #343a40;
+    }
+
+    body {
+      background-color: #f5f5f5;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .navbar-brand {
+      font-weight: 700;
+      color: var(--primary-color) !important;
+    }
+
+    .dashboard-card {
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease;
+      background-color: white;
+      height: 100%;
+    }
+
+    .dashboard-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .card-header {
+      border-radius: 10px 10px 0 0 !important;
+      font-weight: 600;
+    }
+
+    .btn-primary {
+      background-color: var(--primary-color);
+      border-color: var(--primary-color);
+    }
+
+    .btn-success {
+      background-color: var(--secondary-color);
+      border-color: var(--secondary-color);
+    }
+
+    .fc-event {
+      cursor: pointer;
+    }
+
+    .task-item {
+      border-left: 4px solid var(--primary-color);
+    }
+
+    .task-item.high-priority {
+      border-left: 4px solid var(--danger-color);
+    }
+
+    .task-item.medium-priority {
+      border-left: 4px solid var(--warning-color);
+    }
+
+    .task-item.low-priority {
+      border-left: 4px solid var(--secondary-color);
+    }
+
+    .notification-badge {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background-color: var(--danger-color);
+    }
+
+    .leave-status-pending {
+      color: var(--warning-color);
+    }
+
+    .leave-status-approved {
+      color: var(--secondary-color);
+    }
+
+    .leave-status-rejected {
+      color: var(--danger-color);
+    }
+
+    .news-item {
+      border-bottom: 1px solid #eee;
+      padding-bottom: 15px;
+    }
+
+    .news-item:last-child {
+      border-bottom: none;
+    }
+
+    .news-category {
+      font-size: 0.8rem;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-weight: 500;
+    }
+
+    .category-general {
+      background-color: #e9ecef;
+      color: #495057;
+    }
+
+    .category-important {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+
+    .category-policy {
+      background-color: #d1ecf1;
+      color: #0c5460;
+    }
+
+    .category-event {
+      background-color: #d4edda;
+      color: #155724;
+    }
+
+    .thai-font {
+      font-family: 'Sarabun', sans-serif;
+    }
+
+    #calendar {
+      height: 500px;
+    }
+
+    .profile-info {
+      display: flex;
+      align-items: center;
+    }
+
+    .profile-pic {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-right: 15px;
+    }
+
+    .fc-daygrid-event {
+      white-space: normal !important;
+      align-items: center;
+    }
+
+    @media (max-width: 768px) {
+      .dashboard-card {
+        margin-bottom: 20px;
+      }
+    }
+  </style>
+  <!-- Thai Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+    <div class="container">
+      <a class="navbar-brand" href="#">บริษัท ตัวอย่าง จำกัด</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link active" href="#"><i class="fas fa-home"></i> หน้าหลัก</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#"><i class="fas fa-tasks"></i> งานของฉัน</a>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+              <i class="fas fa-bell"></i>
+              <span class="badge rounded-pill bg-danger notification-badge">3</span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+              <li>
+                <h6 class="dropdown-header">การแจ้งเตือน</h6>
+              </li>
+              <li><a class="dropdown-item" href="#">คำขอลาได้รับการอนุมัติ</a></li>
+              <li><a class="dropdown-item" href="#">มีงานใหม่ได้รับมอบหมาย</a></li>
+              <li><a class="dropdown-item" href="#">ประกาศสำคัญ: การประชุมบริษัทวันศุกร์</a></li>
+              <li>
+                <hr class="dropdown-divider">
+              </li>
+              <li><a class="dropdown-item text-center" href="#">ดูทั้งหมด</a></li>
+            </ul>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+              <i class="fas fa-user-circle"></i> {{ current_user.first_name }}
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+              <li><a class="dropdown-item" href="#"><i class="fas fa-user"></i> โปรไฟล์</a></li>
+              <li><a class="dropdown-item" href="#"><i class="fas fa-cog"></i> ตั้งค่า</a></li>
+              <li>
+                <hr class="dropdown-divider">
+              </li>
+              <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i>
+                  ออกจากระบบ</a></li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="container mt-4">
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+      <div class="col-lg-12">
+        <div class="dashboard-card p-4">
+          <div class="row">
+            <div class="col-md-8">
+              <h2 class="thai-font">สวัสดี, {{ current_user.first_name }} {{ current_user.last_name }}</h2>
+              <p class="text-muted thai-font">{{ now().strftime('%A, %d %B %Y') }}</p>
+              <div class="alert alert-info thai-font" role="alert">
+                <h5><i class="fas fa-info-circle"></i> สิ่งที่ต้องทำวันนี้</h5>
+                <ul class="mb-0">
+                  <li>งานที่ได้รับมอบหมาย: 3 งาน (1 งานใกล้ถึงกำหนด)</li>
+                  <li>การประชุมทีม: 11:00 น. - 12:00 น.</li>
+                  <li>ส่งรายงานประจำเดือน</li>
+                </ul>
+              </div>
+            </div>
+            <div class="col-md-4 text-end">
+              <div class="profile-info float-md-end text-md-end text-center">
+                {% if current_user.profile_picture %}
+                <img src="{{ current_user.profile_picture }}" alt="Profile Picture" class="profile-pic">
+                {% else %}
+                <img src="/static/images/default-profile.png" alt="Default Profile" class="profile-pic">
+                {% endif %}
+                <div>
+                  <h5 class="mb-1 thai-font">{{ current_user.role.name }}</h5>
+                  <p class="text-muted mb-0">{{ current_user.email }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <!-- Left Column -->
+      <div class="col-lg-8">
+        <!-- Calendar -->
+        <div class="dashboard-card mb-4">
+          <div class="card-header bg-primary text-white p-3">
+            <h5 class="mb-0 thai-font"><i class="fas fa-calendar-alt me-2"></i> ปฏิทินการทำงาน</h5>
+          </div>
+          <div class="card-body">
+            <div id="calendar"></div>
+          </div>
+        </div>
+
+        <!-- Tasks -->
+        <div class="dashboard-card mb-4">
+          <div class="card-header bg-primary text-white p-3">
+            <h5 class="mb-0 thai-font"><i class="fas fa-tasks me-2"></i> งานที่ได้รับมอบหมาย</h5>
+          </div>
+          <div class="card-body p-0">
+            <div class="list-group list-group-flush">
+              {% for task in current_user.assigned_tasks %}
+              <div
+                class="list-group-item task-item {% if task.priority == 'High' %}high-priority{% elif task.priority == 'Medium' %}medium-priority{% else %}low-priority{% endif %}">
+                <div class="d-flex w-100 justify-content-between">
+                  <h5 class="mb-1 thai-font">{{ task.title }}</h5>
+                  <small
+                    class="{% if task.status == 'Pending' %}text-warning{% elif task.status == 'In Progress' %}text-primary{% else %}text-success{% endif %}">
+                    {{ task.status }}
+                  </small>
+                </div>
+                <p class="mb-1">{{ task.description }}</p>
+                <small class="text-muted">
+                  กำหนดส่ง: {{ task.due_date.strftime('%d/%m/%Y') }} |
+                  ความสำคัญ:
+                  {% if task.priority == 'High' %}
+                  <span class="badge bg-danger">สูง</span>
+                  {% elif task.priority == 'Medium' %}
+                  <span class="badge bg-warning text-dark">ปานกลาง</span>
+                  {% else %}
+                  <span class="badge bg-success">ต่ำ</span>
+                  {% endif %}
+                </small>
+                <div class="mt-2">
+                  <button class="btn btn-sm btn-outline-primary">ดูรายละเอียด</button>
+                  <button class="btn btn-sm btn-outline-success">ปรับสถานะ</button>
+                </div>
+              </div>
+              {% else %}
+              <div class="list-group-item">
+                <p class="text-center mb-0 thai-font">ยังไม่มีงานที่ได้รับมอบหมาย</p>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="card-footer text-center">
+            <button class="btn btn-outline-primary thai-font">ดูงานทั้งหมด</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column -->
+      <div class="col-lg-4">
+        <!-- Leave Request -->
+        <div class="dashboard-card mb-4">
+          <div class="card-header bg-primary text-white p-3">
+            <h5 class="mb-0 thai-font"><i class="fas fa-plane-departure me-2"></i> ระบบคำร้องออนไลน์</h5>
+          </div>
+          <div class="card-body">
+            <button class="btn btn-primary w-100 mb-3 thai-font" data-bs-toggle="modal"
+              data-bs-target="#leaveRequestModal">
+              <i class="fas fa-plus-circle me-2"></i> ส่งคำขอใหม่
+            </button>
+
+            <h6 class="mt-4 mb-3 thai-font">ประวัติการลาล่าสุด</h6>
+            {% if current_user.leave_requests %}
+            <div class="list-group list-group-flush">
+              {% for leave in current_user.leave_requests %}
+              <div class="list-group-item px-0">
+                <div class="d-flex justify-content-between">
+                  <div>
+                    <h6 class="mb-1 thai-font">{{ leave.leave_type }}</h6>
+                    <small class="text-muted">{{ leave.start_date.strftime('%d/%m/%Y') }} - {{
+                      leave.end_date.strftime('%d/%m/%Y') }}</small>
+                  </div>
+                  <span class="
+                        {% if leave.status == 'Pending' %}leave-status-pending
+                        {% elif leave.status == 'Approved' %}leave-status-approved
+                        {% else %}leave-status-rejected{% endif %}">
+                    {{ leave.status }}
+                  </span>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-center text-muted thai-font">ยังไม่มีประวัติการลา</p>
+            {% endif %}
+          </div>
+          <div class="card-footer text-center">
+            <button class="btn btn-outline-primary thai-font" data-bs-toggle="modal"
+              data-bs-target="#leaveHistoryModal">ดูประวัติทั้งหมด</button>
+          </div>
+        </div>
+
+        <!-- Announcements -->
+        <div class="dashboard-card">
+          <div class="card-header bg-primary text-white p-3">
+            <h5 class="mb-0 thai-font"><i class="fas fa-bullhorn me-2"></i> ข่าวสารภายใน</h5>
+          </div>
+          <div class="card-body p-0">
+            <div class="p-3">
+              <div class="input-group mb-3">
+                <input type="text" class="form-control" placeholder="ค้นหาข่าวสาร...">
+                <button class="btn btn-outline-secondary" type="button"><i class="fas fa-search"></i></button>
+              </div>
+            </div>
+            <div class="list-group list-group-flush">
+              {% for announcement in announcements %}
+              <div class="list-group-item news-item px-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <span class="news-category category-{{ announcement.category.lower() }}">{{ announcement.category
+                    }}</span>
+                  <small class="text-muted">{{ announcement.created_at.strftime('%d/%m/%Y') }}</small>
+                </div>
+                <h6 class="mb-1 thai-font">{{ announcement.title }}</h6>
+                <p class="mb-1 small">{{ announcement.content|truncate(100) }}</p>
+                <div class="d-flex justify-content-between align-items-center mt-2">
+                  <button class="btn btn-sm btn-link px-0">อ่านเพิ่มเติม</button>
+                  <div>
+                    <button class="btn btn-sm btn-outline-primary border-0"><i class="far fa-thumbs-up"></i>
+                      ถูกใจ</button>
+                    <button class="btn btn-sm btn-outline-secondary border-0"><i class="far fa-comment"></i>
+                      แสดงความคิดเห็น</button>
+                  </div>
+                </div>
+              </div>
+              {% else %}
+              <div class="list-group-item">
+                <p class="text-center mb-0 thai-font">ยังไม่มีข่าวสารล่าสุด</p>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="card-footer text-center">
+            <button class="btn btn-outline-primary thai-font">ดูข่าวสารทั้งหมด</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leave Request Modal -->
+  <div class="modal fade" id="leaveRequestModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title thai-font"><i class="fas fa-plane-departure me-2"></i> ส่งคำขอลา</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="leaveRequestForm" action="{{ url_for('views.submit_leave_request') }}" method="POST">
+            <div class="mb-3">
+              <label for="leaveType" class="form-label thai-font">ประเภทการลา</label>
+              <select class="form-select" id="leaveType" name="leave_type" required>
+                <option value="">เลือกประเภทการลา</option>
+                <option value="Sick">ลาป่วย</option>
+                <option value="Vacation">ลาพักร้อน</option>
+                <option value="Personal">ลากิจ</option>
+                <option value="Other">อื่นๆ</option>
+              </select>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="startDate" class="form-label thai-font">วันที่เริ่มต้น</label>
+                <input type="date" class="form-control" id="startDate" name="start_date" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="endDate" class="form-label thai-font">วันที่สิ้นสุด</label>
+                <input type="date" class="form-control" id="endDate" name="end_date" required>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="leaveReason" class="form-label thai-font">เหตุผลการลา</label>
+              <textarea class="form-control" id="leaveReason" name="reason" rows="3" required></textarea>
+            </div>
+
+            <div class="mb-3">
+              <label for="attachments" class="form-label thai-font">แนบเอกสาร (ถ้ามี)</label>
+              <input type="file" class="form-control" id="attachments" name="attachments">
+              <div class="form-text">รองรับไฟล์ PDF, JPG, PNG (ไม่เกิน 5MB)</div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+          <button type="submit" form="leaveRequestForm" class="btn btn-primary">ส่งคำขอ</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Task Details Modal - Add this to your Employee_Page.html -->
+  <div class="modal fade" id="taskDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title thai-font"><i class="fas fa-tasks me-2"></i> รายละเอียดงาน</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label fw-bold thai-font">ชื่องาน:</label>
+                <p id="taskTitle" class="mb-0"></p>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold thai-font">สถานะ:</label>
+                <div id="taskStatusWrapper"></div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold thai-font">ความสำคัญ:</label>
+                <div id="taskPriorityWrapper"></div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold thai-font">มอบหมายโดย:</label>
+                <p id="taskCreator" class="mb-0"></p>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label fw-bold thai-font">กำหนดส่ง:</label>
+                <p id="taskDueDate" class="mb-0"></p>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold thai-font">สร้างเมื่อ:</label>
+                <p id="taskCreatedAt" class="mb-0"></p>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold thai-font">ไฟล์แนบ:</label>
+                <div id="taskAttachment"></div>
+              </div>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold thai-font">รายละเอียด:</label>
+            <p id="taskDescription" class="mb-0"></p>
+          </div>
+          <div class="border-top pt-3 mt-3">
+            <h6 class="thai-font">อัพเดทสถานะ</h6>
+            <form id="updateTaskStatusForm">
+              <input type="hidden" id="updateTaskId" name="task_id">
+              <div class="d-flex gap-2 mb-2">
+                <select class="form-select" id="updateTaskStatus" name="status">
+                  <option value="Pending">รอดำเนินการ</option>
+                  <option value="In Progress">กำลังดำเนินการ</option>
+                  <option value="Completed">เสร็จสิ้น</option>
+                </select>
+                <button type="submit" class="btn btn-primary">อัพเดท</button>
+              </div>
+            </form>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leave History Modal -->
+  <div class="modal fade" id="leaveHistoryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title thai-font"><i class="fas fa-history me-2"></i> ประวัติการลา</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="table-responsive">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">ประเภทการลา</th>
+                  <th scope="col">วันที่เริ่มต้น</th>
+                  <th scope="col">วันที่สิ้นสุด</th>
+                  <th scope="col">จำนวนวัน</th>
+                  <th scope="col">เหตุผล</th>
+                  <th scope="col">สถานะ</th>
+                  <th scope="col">อนุมัติโดย</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% if current_user.leave_requests %}
+                {% for i, leave in enumerate(current_user.leave_requests, 1) %}
+                <tr>
+                  <th scope="row">{{ i }}</th>
+                  <td>{{ leave.leave_type }}</td>
+                  <td>{{ leave.start_date.strftime('%d/%m/%Y') }}</td>
+                  <td>{{ leave.end_date.strftime('%d/%m/%Y') }}</td>
+                  <td>
+                    {% set days = (leave.end_date - leave.start_date).days + 1 %}
+                    {{ days }} วัน
+                  </td>
+                  <td>{{ leave.reason|truncate(30) }}</td>
+                  <td>
+                    <span
+                      class="badge {% if leave.status == 'Pending' %}bg-warning{% elif leave.status == 'Approved' %}bg-success{% else %}bg-danger{% endif %}">
+                      {{ leave.status }}
+                    </span>
+                  </td>
+                  <td>
+                    {% if leave.approver %}
+                    {{ leave.approver.first_name }} {{ leave.approver.last_name }}
+                    {% else %}
+                    -
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                <tr>
+                  <td colspan="8" class="text-center">ยังไม่มีประวัติการลา</td>
+                </tr>
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="{{ url_for('static', filename='js/employee_dashboard.js') }}"></script>
+  <!-- Bootstrap JS Bundle with Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- FullCalendar -->
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+  <!-- jQuery (required for some components) -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Initialize FullCalendar
+      var calendarEl = document.getElementById('calendar');
+      var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        locale: 'th',
+        buttonText: {
+          today: 'วันนี้',
+          month: 'เดือน',
+          week: 'สัปดาห์',
+          day: 'วัน'
+        },
+        events: [
+          {
+            title: 'การประชุมทีม',
+            start: new Date().toISOString().split('T')[0] + 'T11:00:00',
+            end: new Date().toISOString().split('T')[0] + 'T12:00:00',
+            backgroundColor: '#3498db',
+            borderColor: '#3498db'
+          },
+          {
+            title: 'ส่งรายงานประจำเดือน',
+            start: new Date().toISOString().split('T')[0],
+            backgroundColor: '#e74c3c',
+            borderColor: '#e74c3c'
+          },
+          {% for leave in current_user.leave_requests %}
+            {
+          title: '{{ leave.leave_type }}',
+          start: '{{ leave.start_date.strftime("%Y-%m-%d") }}',
+          end: '{{ leave.end_date.strftime("%Y-%m-%d") }}',
+          backgroundColor: '{% if leave.status == "Approved" %}#2ecc71{% elif leave.status == "Pending" %}#f39c12{% else %}#95a5a6{% endif %}',
+          borderColor: '{% if leave.status == "Approved" %}#27ae60{% elif leave.status == "Pending" %}#e67e22{% else %}#7f8c8d{% endif %}'
+        },
+        {% endfor %}
+          {% for task in current_user.assigned_tasks %}
+    {
+      title: 'กำหนดส่ง: {{ task.title }}',
+        start: '{{ task.due_date.strftime("%Y-%m-%d") }}',
+          backgroundColor: '{% if task.priority == "High" %}#e74c3c{% elif task.priority == "Medium" %}#f39c12{% else %}#3498db{% endif %}',
+            borderColor: '{% if task.priority == "High" %}#c0392b{% elif task.priority == "Medium" %}#d35400{% else %}#2980b9{% endif %}'
+    },
+    {% endfor %}
+        ],
+    eventClick: function(info) {
+      alert(info.event.title);
+    },
+    dayMaxEvents: true,
+      height: 'auto'
+      });
+    calendar.render();
+
+    // Form validation for leave request
+    document.getElementById('leaveRequestForm').addEventListener('submit', function (event) {
+      var startDate = new Date(document.getElementById('startDate').value);
+      var endDate = new Date(document.getElementById('endDate').value);
+
+      if (endDate < startDate) {
+        event.preventDefault();
+        alert('วันที่สิ้นสุดต้องไม่น้อยกว่าวันที่เริ่มต้น');
+      }
+    });
+    });
+  </script>
+  <!-- JavaScript to handle the task modal functionality - Add this to your script block -->
+  <script>
+    // Function to open task details modal
+    function openTaskDetails(taskId) {
+      fetch(`/get_task_details/${taskId}`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Failed to fetch task details');
+          }
+          return response.json();
+        })
+        .then(data => {
+          // Populate the modal with task data
+          document.getElementById('taskTitle').textContent = data.title;
+
+          // Set task status with appropriate badge
+          let statusBadge = document.createElement('span');
+          statusBadge.className = 'badge ';
+          if (data.status === 'Pending') {
+            statusBadge.className += 'bg-warning';
+          } else if (data.status === 'In Progress') {
+            statusBadge.className += 'bg-primary';
+          } else {
+            statusBadge.className += 'bg-success';
+          }
+          statusBadge.textContent = data.status;
+          document.getElementById('taskStatusWrapper').innerHTML = '';
+          document.getElementById('taskStatusWrapper').appendChild(statusBadge);
+
+          // Set task priority with appropriate badge
+          let priorityBadge = document.createElement('span');
+          priorityBadge.className = 'badge ';
+          if (data.priority === 'High') {
+            priorityBadge.className += 'bg-danger';
+          } else if (data.priority === 'Medium') {
+            priorityBadge.className += 'bg-warning text-dark';
+          } else {
+            priorityBadge.className += 'bg-success';
+          }
+          priorityBadge.textContent = data.priority;
+          document.getElementById('taskPriorityWrapper').innerHTML = '';
+          document.getElementById('taskPriorityWrapper').appendChild(priorityBadge);
+
+          document.getElementById('taskCreator').textContent = data.created_by;
+          document.getElementById('taskDueDate').textContent = formatDate(data.due_date);
+          document.getElementById('taskCreatedAt').textContent = data.created_at;
+          document.getElementById('taskDescription').textContent = data.description;
+
+          // Handle attachment
+          if (data.attachment) {
+            document.getElementById('taskAttachment').innerHTML = `
+            <a href="${data.attachment}" target="_blank" class="btn btn-sm btn-outline-primary">
+              <i class="fas fa-paperclip"></i> ดูไฟล์แนบ
+            </a>`;
+          } else {
+            document.getElementById('taskAttachment').innerHTML = '<p class="text-muted mb-0">ไม่มีไฟล์แนบ</p>';
+          }
+
+          // Set current status in the update form
+          document.getElementById('updateTaskStatus').value = data.status;
+          document.getElementById('updateTaskId').value = taskId;
+
+          // Open the modal
+          var taskModal = new bootstrap.Modal(document.getElementById('taskDetailsModal'));
+          taskModal.show();
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('เกิดข้อผิดพลาดในการโหลดข้อมูล: ' + error.message);
+        });
+    }
+
+    // Helper function to format date
+    function formatDate(dateString) {
+      const options = { year: 'numeric', month: 'long', day: 'numeric' };
+      return new Date(dateString).toLocaleDateString('th-TH', options);
+    }
+
+    // Submit task status update
+    document.getElementById('updateTaskStatusForm').addEventListener('submit', function (event) {
+      event.preventDefault();
+
+      const taskId = document.getElementById('updateTaskId').value;
+      const status = document.getElementById('updateTaskStatus').value;
+
+      const formData = new FormData();
+      formData.append('status', status);
+
+      fetch(`/update_task_status/${taskId}`, {
+        method: 'POST',
+        body: formData
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'success') {
+            // Show success message
+            alert('อัพเดทสถานะเรียบร้อยแล้ว');
+
+            // Update UI status badge
+            let statusBadge = document.createElement('span');
+            statusBadge.className = 'badge ';
+            if (status === 'Pending') {
+              statusBadge.className += 'bg-warning';
+            } else if (status === 'In Progress') {
+              statusBadge.className += 'bg-primary';
+            } else {
+              statusBadge.className += 'bg-success';
+            }
+            statusBadge.textContent = status;
+            document.getElementById('taskStatusWrapper').innerHTML = '';
+            document.getElementById('taskStatusWrapper').appendChild(statusBadge);
+
+            // Refresh task list if needed
+            // location.reload();
+          } else {
+            alert('เกิดข้อผิดพลาด: ' + data.message);
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('เกิดข้อผิดพลาดในการอัพเดทสถานะงาน');
+        });
+    });
+  </script>
+</body>
+
+</html>
